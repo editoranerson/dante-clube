@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { BookText, QrCode, Rocket, Settings, Store, Tags, Users } from "lucide-react";
+import { BookText, QrCode, Rocket, Settings, Sparkles, Store, Tags, Users } from "lucide-react";
 import { getMyStaffRoles } from "@/lib/staff";
 import { StaffHeader, StaffTabs } from "@/components/staff/StaffHeader";
 import { AssociatesTab } from "@/components/staff/AssociatesTab";
@@ -9,6 +9,7 @@ import { CategoriesTab } from "@/components/staff/CategoriesTab";
 import { MissionsTab } from "@/components/staff/MissionsTab";
 import { PagesTab } from "@/components/staff/PagesTab";
 import { SettingsTab } from "@/components/staff/SettingsTab";
+import { AvatarsTab } from "@/components/staff/AvatarsTab";
 import { Validator } from "@/components/staff/Validator";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
-type Tab = "associados" | "lojas" | "categorias" | "missoes" | "paginas" | "validador" | "ajustes";
+type Tab = "associados" | "lojas" | "categorias" | "missoes" | "paginas" | "avatares" | "validador" | "ajustes";
 
 function AdminPage() {
   const { email } = Route.useRouteContext();
@@ -48,6 +49,7 @@ function AdminPage() {
           { value: "lojas", label: "Lojas & Ofertas", icon: Store },
           { value: "categorias", label: "Categorias", icon: Tags },
           { value: "missoes", label: "Missões", icon: Rocket },
+          { value: "avatares", label: "Avatares", icon: Sparkles },
           { value: "paginas", label: "Páginas", icon: BookText },
           { value: "validador", label: "Validador", icon: QrCode },
           { value: "ajustes", label: "Ajustes", icon: Settings },
@@ -58,6 +60,7 @@ function AdminPage() {
         {tab === "lojas" && <StoresTab />}
         {tab === "categorias" && <CategoriesTab />}
         {tab === "missoes" && <MissionsTab />}
+        {tab === "avatares" && <AvatarsTab />}
         {tab === "paginas" && <PagesTab />}
         {tab === "validador" && <Validator />}
         {tab === "ajustes" && <SettingsTab email={email} />}

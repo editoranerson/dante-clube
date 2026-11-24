@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Pencil, Plus, Star, Tag, Trash2 } from "lucide-react";
+import { Pencil, Plus, Star, Tag, Ticket, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -37,8 +37,23 @@ export function StoreOffers({ storeId, canFeature, defaults }: { storeId: string
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: key });
     void queryClient.invalidateQueries({ queryKey: ["staff", "stores"] });
+    void queryClient.invalidateQueries({ queryKey: ["staff", "offer-coupon-stock"] });
   };
   const catName = (id: string | null) => cats.data?.find((c) => c.id === id)?.name;
+
+  const uniqueIds = (offers.data ?? []).filter((o) => o.coupon_mode === "unique").map((o) => o.id);
+  const stock = useQuery({
+    queryKey: ["staff", "offer-coupon-stock", storeId, uniqueIds],
+    queryFn: async () => {
+      if (!uniqueIds.length) return new Map<string, { total: number; available: number }>();
+      const { data, error } = await supabase.rpc("coupon_stock", { _offer_ids: uniqueIds });
+      if (error) throw error;
+      const map = new Map<string, { total: number; available: number }>();
+      for (const s of data ?? []) map.set(s.offer_id, { total: s.total, available: s.available });
+      return map;
+    },
+    enabled: uniqueIds.length > 0,
+  });
 
   async function toggleActive(o: Offer, active: boolean) {
     const { error } = await supabase.from("offers").update({ active }).eq("id", o.id);
@@ -84,6 +99,16 @@ export function StoreOffers({ storeId, canFeature, defaults }: { storeId: string
                 <p className="truncate text-xs text-muted-foreground">
                   {[catName(o.category_id), o.coupon_code ? `Cupom ${o.coupon_code}` : "Sem cupom", actionLabel(o.action_type)].filter(Boolean).join(" · ")}
                 </p>
+                {o.coupon_mode === "unique" && (
+                  <p className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-primary-glow">
+                    <Ticket className="h-3 w-3" />
+                    {(() => {
+                      const s = stock.data?.get(o.id);
+                      if (!s) return "Lote exclusivo";
+                      return `${s.available} disponíveis de ${s.total}`;
+                    })()}
+                  </p>
+                )}
               </div>
               <div className="flex shrink-0 flex-col items-end justify-between gap-2">
                 <Switch checked={o.active} onCheckedChange={(v) => toggleActive(o, v)} aria-label={o.active ? "Pausar oferta" : "Ativar oferta"} />
