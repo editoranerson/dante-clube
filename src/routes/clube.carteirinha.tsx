@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Download, FileImage, FileText, Loader2, Share2 } from "lucide-react";
+import { Download, FileImage, FileText, Loader2, Share2, Sparkles } from "lucide-react";
 import { useClub } from "@/components/club/ClubContext";
 import { BadgeBack, BadgeFront } from "@/components/club/MemberBadge";
+import { DanteAvatarPicker } from "@/components/club/DanteAvatarPicker";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatMemberId } from "@/lib/format";
+import { resolveDanteAvatar } from "@/lib/brand";
 
 export const Route = createFileRoute("/clube/carteirinha")({
   head: () => ({
@@ -30,7 +32,9 @@ export const Route = createFileRoute("/clube/carteirinha")({
 const PLACEHOLDER = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 
 function BadgePage() {
-  const { associate } = useClub();
+  const { associate, avatars } = useClub();
+  const avatarSrc = resolveDanteAvatar(avatars, associate.dante_avatar_id);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [flipped, setFlipped] = useState(false);
   const [busy, setBusy] = useState<null | "png" | "pdf" | "share">(null);
   const exportRef = useRef<HTMLDivElement>(null);
@@ -125,7 +129,7 @@ function BadgePage() {
         >
           <div className="flip-card relative h-full w-full" data-flipped={flipped}>
             <div className="flip-face absolute inset-0">
-              <BadgeFront a={associate} />
+              <BadgeFront a={associate} avatarSrc={avatarSrc} />
             </div>
             <div className="flip-face flip-back absolute inset-0">
               <BadgeBack a={associate} qrValue={qrValue} />
@@ -134,7 +138,15 @@ function BadgePage() {
         </button>
       </div>
 
-      <div className="mx-auto mt-6 grid max-w-md grid-cols-2 gap-3">
+      {avatars.length > 1 && (
+        <div className="mx-auto mt-4 flex max-w-md justify-center">
+          <Button variant="ghost" className="text-primary-glow hover:text-primary-glow" onClick={() => setPickerOpen(true)}>
+            <Sparkles /> Trocar visual do Dante
+          </Button>
+        </div>
+      )}
+
+      <div className={avatars.length > 1 ? "mx-auto mt-2 grid max-w-md grid-cols-2 gap-3" : "mx-auto mt-6 grid max-w-md grid-cols-2 gap-3"}>
         <Button variant="soft" size="lg" onClick={share} disabled={busy !== null}>
           {busy === "share" ? <Loader2 className="animate-spin" /> : <Share2 />}
           Compartilhar
@@ -157,10 +169,12 @@ function BadgePage() {
         Esta carteirinha é válida como identificação do Associado Dante Clube.
       </p>
 
+      <DanteAvatarPicker open={pickerOpen} onOpenChange={setPickerOpen} avatars={avatars} currentSrc={avatarSrc} />
+
       {/* Off-screen render of both sides, used for the image/PDF export. */}
       <div aria-hidden="true" className="pointer-events-none fixed -left-[10000px] top-0">
         <div ref={exportRef} className="flex w-[400px] flex-col gap-5 bg-background p-5">
-          <div className="h-[460px]"><BadgeFront a={associate} /></div>
+          <div className="h-[460px]"><BadgeFront a={associate} avatarSrc={avatarSrc} /></div>
           <div className="h-[460px]"><BadgeBack a={associate} qrValue={qrValue} /></div>
         </div>
       </div>

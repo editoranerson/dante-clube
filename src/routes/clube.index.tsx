@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/club/EmptyState";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 import { getMainSupabase } from "@/lib/main-supabase";
 import { useUniversoUrl } from "@/lib/settings";
+import { resolveDanteAvatar } from "@/lib/brand";
 import { firstName, formatDate, formatMemberId } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +34,7 @@ const tintClasses = [
 ];
 
 function ClubHome() {
-  const { associate, categories, offers } = useClub();
+  const { associate, categories, offers, avatars } = useClub();
   const universoUrl = useUniversoUrl();
   const active = associate.status === "ativo";
   const featured = offers.filter((o) => o.featured);
@@ -55,7 +56,9 @@ function ClubHome() {
           <LogOut className="h-[18px] w-[18px]" />
         </button>
         <div className="flex items-center gap-4">
-          <DanteAvatar className="h-20 w-20 md:h-24 md:w-24" />
+          <Link to="/clube/carteirinha" aria-label="Ver minha carteirinha" className="shrink-0 rounded-full">
+            <DanteAvatar src={resolveDanteAvatar(avatars, associate.dante_avatar_id)} className="h-20 w-20 md:h-24 md:w-24" />
+          </Link>
           <div className="min-w-0">
             <p className="text-sm text-foreground/80">Olá,</p>
             <h1 className="truncate font-display text-3xl font-semibold leading-tight md:text-4xl">

@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { QrCode } from "lucide-react";
 import { UniversoLogo } from "./UniversoLogo";
-import { formatDate, formatMemberId, formatValidationCode, initials } from "@/lib/format";
+import { formatDate, formatMemberId, formatValidationCode } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export type BadgeAssociate = {
@@ -10,18 +10,13 @@ export type BadgeAssociate = {
   member_number: number;
   status: string;
   created_at: string;
-  avatar_url: string | null;
   validation_code: string;
 };
 
-function UserAvatar({ a, className }: { a: BadgeAssociate; className?: string }) {
+function UserAvatar({ src, className }: { src: string; className?: string }) {
   return (
-    <div className={cn("grid shrink-0 place-items-center overflow-hidden rounded-3xl bg-gradient-primary ring-2 ring-primary-glow/60", className)}>
-      {a.avatar_url ? (
-        <img src={a.avatar_url} alt="" crossOrigin="anonymous" className="h-full w-full object-cover" />
-      ) : (
-        <span className="font-friendly text-3xl font-semibold text-primary-foreground">{initials(a.full_name)}</span>
-      )}
+    <div className={cn("shrink-0 overflow-hidden rounded-3xl bg-gradient-primary ring-2 ring-primary-glow/60", className)}>
+      <img src={src} alt="Avatar do Dante escolhido pelo Associado" crossOrigin="anonymous" className="h-full w-full object-cover" />
     </div>
   );
 }
@@ -40,8 +35,8 @@ export function StatusSeal({ active }: { active: boolean }) {
   );
 }
 
-export const BadgeFront = forwardRef<HTMLDivElement, { a: BadgeAssociate; className?: string }>(function BadgeFront(
-  { a, className },
+export const BadgeFront = forwardRef<HTMLDivElement, { a: BadgeAssociate; avatarSrc: string; className?: string }>(function BadgeFront(
+  { a, avatarSrc, className },
   ref,
 ) {
   const active = a.status === "ativo";
@@ -55,7 +50,7 @@ export const BadgeFront = forwardRef<HTMLDivElement, { a: BadgeAssociate; classN
         <StatusSeal active={active} />
       </div>
       <div className="mt-6 flex items-center gap-4">
-        <UserAvatar a={a} className="h-24 w-24" />
+        <UserAvatar src={avatarSrc} className="h-24 w-24" />
         <div className="min-w-0">
           <p className="font-display text-2xl font-semibold leading-tight [overflow-wrap:anywhere]">{a.full_name || "Associado"}</p>
           <p className="mt-1 font-friendly text-lg font-medium text-primary-glow">Associado</p>

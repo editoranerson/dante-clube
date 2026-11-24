@@ -1,7 +1,10 @@
-import { forwardRef } from "react";
+import { forwardRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Copy, ExternalLink, MapPin, Store } from "lucide-react";
-import type { ClubOffer } from "@/lib/associate.functions";
+import { Copy, ExternalLink, Gift, Loader2, MapPin, Store, TicketX } from "lucide-react";
+import { claimCoupon, type ClubData, type ClubOffer } from "@/lib/associate.functions";
+import { associateCouponState } from "@/lib/coupons";
 import { OfferVisual } from "./OfferVisual";
 import { Button } from "@/components/ui/button";
 import { actionHref, actionLabel } from "@/lib/format";
@@ -66,28 +69,7 @@ export const OfferCard = forwardRef<
           </p>
         )}
         <div className="mt-auto space-y-2 pt-4">
-          {offer.coupon_code ? (
-            <div className="flex items-center gap-2 rounded-2xl border border-dashed border-primary-glow/50 bg-primary/10 p-1.5 pl-4">
-              <span className="min-w-0 flex-1 truncate font-friendly text-base font-semibold tracking-wider text-primary-glow">
-                {offer.coupon_code}
-              </span>
-              <Button
-                size="sm"
-                variant="hero"
-                onClick={async () => {
-                  const ok = await copyText(offer.coupon_code ?? "");
-                  if (ok) toast.success(`Cupom ${offer.coupon_code} copiado!`, { description: "Cole no carrinho da loja para aplicar o desconto." });
-                  else toast.error("Não foi possível copiar. Selecione o código e copie manualmente.");
-                }}
-              >
-                <Copy /> Copiar Cupom
-              </Button>
-            </div>
-          ) : (
-            <p className="rounded-2xl bg-background/50 px-4 py-2.5 text-xs text-muted-foreground">
-              Sem cupom: apresente sua carteirinha para usar este benefício.
-            </p>
-          )}
+          <CouponArea offer={offer} />
           {href && (
             <Button asChild variant="outline" className="w-full">
               <a href={href} target="_blank" rel="noopener noreferrer">
@@ -100,3 +82,88 @@ export const OfferCard = forwardRef<
     </article>
   );
 });
+
+function CodeBox({ code, label }: { code: string; label?: string }) {
+  return (
+    <div>
+      {label && <p className="mb-1 px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>}
+      <div className="flex items-center gap-2 rounded-2xl border border-dashed border-primary-glow/50 bg-primary/10 p-1.5 pl-4">
+        <span className="min-w-0 flex-1 truncate font-friendly text-base font-semibold tracking-wider text-primary-glow">{code}</span>
+        <Button
+          size="sm"
+          variant="hero"
+          onClick={async () => {
+            const ok = await copyText(code);
+            if (ok) toast.success(`Cupom ${code} copiado!`, { description: "Cole no carrinho da loja para aplicar o desconto." });
+            else toast.error("Não foi possível copiar. Selecione o código e copie manualmente.");
+          }}
+        >
+          <Copy /> Copiar Cupom
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function CouponArea({ offer }: { offer: ClubOffer }) {
+  const claim = useServerFn(claimCoupon);
+  const queryClient = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const state = associateCouponState(offer);
+
+  function patchOffer(patch: Partial<ClubOffer>) {
+    queryClient.setQueryData<ClubData>(["club"], (old) =>
+      old ? { ...old, offers: old.offers.map((o) => (o.id === offer.id ? { ...o, ...patch } : o)) } : old,
+    );
+  }
+
+  async function onClaim() {
+    setBusy(true);
+    try {
+      const res = await claim({ data: { offerId: offer.id } });
+      if (res.ok) {
+        patchOffer({ my_coupon: res.code, coupons_left: Math.max(0, offer.coupons_left - 1) });
+        const copied = await copyText(res.code);
+        toast.success(`O cupom ${res.code} é seu!`, {
+          description: copied ? "Já copiamos para você. Ele fica guardado aqui no card." : "Ele fica guardado aqui no card.",
+        });
+      } else if (res.reason === "esgotado") {
+        patchOffer({ coupons_left: 0 });
+        toast.error("Os cupons desta oferta acabaram.", { description: "Fique de olho: novos lotes podem chegar." });
+      } else {
+        toast.error("Esta oferta não está mais disponível.");
+      }
+    } catch {
+      toast.error("Não foi possível pegar o cupom agora. Tente de novo.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (state.kind === "shared") return <CodeBox code={state.code} />;
+  if (state.kind === "mine") return <CodeBox code={state.code} label="Seu cupom exclusivo" />;
+  if (state.kind === "available") {
+    return (
+      <div className="space-y-1.5">
+        <Button variant="hero" className="w-full" onClick={onClaim} disabled={busy}>
+          {busy ? <Loader2 className="animate-spin" /> : <Gift />} Pegar meu cupom
+        </Button>
+        <p className="text-center text-xs text-muted-foreground">
+          Cupom exclusivo, 1 por Associado · {state.left === 1 ? "resta 1" : `restam ${state.left}`}
+        </p>
+      </div>
+    );
+  }
+  if (state.kind === "sold_out") {
+    return (
+      <p className="flex items-center gap-2 rounded-2xl bg-background/50 px-4 py-2.5 text-xs text-muted-foreground">
+        <TicketX className="h-4 w-4 shrink-0" /> Cupons esgotados. Fique de olho: novos lotes podem chegar.
+      </p>
+    );
+  }
+  return (
+    <p className="rounded-2xl bg-background/50 px-4 py-2.5 text-xs text-muted-foreground">
+      Sem cupom: apresente sua carteirinha para usar este benefício.
+    </p>
+  );
+}

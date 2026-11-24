@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 
 export function InstitutionalFooter() {
   return (
-    <footer className="mt-12 border-t border-border/60 py-6 text-center">
+    <footer className="mt-8 border-t border-border/60 py-5 text-center">
       <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
         <Link to="/termos" className="transition-colors hover:text-primary-glow">
           Termos de Uso

@@ -25,7 +25,7 @@ export async function verifyMainToken(token: string): Promise<MainUser | null> {
 }
 
 export async function ensureAssociate(user: MainUser) {
-  const select = "id, member_number, full_name, email, avatar_url, status, validation_code, created_at";
+  const select = "id, member_number, full_name, email, avatar_url, dante_avatar_id, status, validation_code, created_at";
   const existing = await supabaseAdmin
     .from("associates")
     .select(select)

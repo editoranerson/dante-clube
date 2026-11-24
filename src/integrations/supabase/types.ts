@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          dante_avatar_id: string | null
           email: string
           full_name: string
           id: string
@@ -29,6 +30,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          dante_avatar_id?: string | null
           email?: string
           full_name?: string
           id?: string
@@ -40,6 +42,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          dante_avatar_id?: string | null
           email?: string
           full_name?: string
           id?: string
@@ -48,7 +51,15 @@ export type Database = {
           status?: string
           validation_code?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "associates_dante_avatar_id_fkey"
+            columns: ["dante_avatar_id"]
+            isOneToOne: false
+            referencedRelation: "dante_avatars"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       categories: {
         Row: {
@@ -69,6 +80,33 @@ export type Database = {
           created_at?: string
           icon?: string
           id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      dante_avatars: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          is_default: boolean
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          is_default?: boolean
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          is_default?: boolean
           name?: string
           sort_order?: number
         }
@@ -113,6 +151,48 @@ export type Database = {
         }
         Relationships: []
       }
+      offer_coupons: {
+        Row: {
+          assigned_at: string | null
+          associate_id: string | null
+          code: string
+          created_at: string
+          id: string
+          offer_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          associate_id?: string | null
+          code: string
+          created_at?: string
+          id?: string
+          offer_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          associate_id?: string | null
+          code?: string
+          created_at?: string
+          id?: string
+          offer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_coupons_associate_id_fkey"
+            columns: ["associate_id"]
+            isOneToOne: false
+            referencedRelation: "associates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offer_coupons_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offers: {
         Row: {
           action_type: string
@@ -121,6 +201,7 @@ export type Database = {
           address: string | null
           category_id: string | null
           coupon_code: string | null
+          coupon_mode: string
           cover_url: string | null
           created_at: string
           description: string
@@ -137,6 +218,7 @@ export type Database = {
           address?: string | null
           category_id?: string | null
           coupon_code?: string | null
+          coupon_mode?: string
           cover_url?: string | null
           created_at?: string
           description?: string
@@ -153,6 +235,7 @@ export type Database = {
           address?: string | null
           category_id?: string | null
           coupon_code?: string | null
+          coupon_mode?: string
           cover_url?: string | null
           created_at?: string
           description?: string
@@ -274,6 +357,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_offer_coupon: {
+        Args: { _associate_id: string; _offer_id: string }
+        Returns: string
+      }
+      coupon_stock: {
+        Args: { _offer_ids: string[] }
+        Returns: {
+          available: number
+          offer_id: string
+          total: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -281,6 +376,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      owns_offer: { Args: { _offer_id: string }; Returns: boolean }
       owns_store: { Args: { _store_id: string }; Returns: boolean }
       public_validate: {
         Args: { _code: string }

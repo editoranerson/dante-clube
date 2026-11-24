@@ -8,6 +8,13 @@
       "when": 1795475456515,
       "tag": "0000_dante_clube_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795480234295,
+      "tag": "0001_dante_avatars_and_unique_coupons",
+      "breakpoints": true
     }
   ]
 }

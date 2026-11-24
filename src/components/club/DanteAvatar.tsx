@@ -1,7 +1,7 @@
 import { DANTE_AVATAR_URL } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
-export function DanteAvatar({ className, ring = true }: { className?: string; ring?: boolean }) {
+export function DanteAvatar({ className, ring = true, src }: { className?: string; ring?: boolean; src?: string }) {
   return (
     <div
       className={cn(
@@ -11,7 +11,7 @@ export function DanteAvatar({ className, ring = true }: { className?: string; ri
       )}
     >
       <img
-        src={DANTE_AVATAR_URL}
+        src={src ?? DANTE_AVATAR_URL}
         alt="Dante, mascote do Universo Querido Dante"
         width={320}
         height={320}
